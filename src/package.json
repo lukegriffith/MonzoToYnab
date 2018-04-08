@@ -1,0 +1,17 @@
+{
+  "name": "MonzoToYNAB",
+  "version": "1.0.0",
+  "description": "Lambda function to connect Monzo transaction hook, to YNAB's create transaction API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node test.js"
+  },
+  "keywords": [],
+  "author": "Luke Griffith",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.222.1",
+    "ynab": "^0.15.0"
+  }
+}
