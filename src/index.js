@@ -11,25 +11,6 @@ function raiseError(error, stack, callback) {
 };
 
 
-exports.handler = (event, context, callback) => {
-
-    console.log("Starting");
-
-    var s3 = new aws.S3();
-    s3.getObject(config['config'], function(err, data){
-        if (err) raiseError(err, err.stack, callback); // an error occurred
-        else {
-            try {
-                var bucket_config = JSON.parse(data.Body.toString('utf-8'))
-            }
-            catch (e) {
-                raiseError("Unable to parse bucket config", e, callback);
-            }
-            processEvent(bucket_config, event, callback);
-        }
-    })
-};
-
 
 
 function processEvent(bucket_config, event, callback){
@@ -61,4 +42,25 @@ function processEvent(bucket_config, event, callback){
 
       callback();
 }
+
+
+
+exports.handler = (event, context, callback) => {
+
+    console.log("Starting");
+
+    var s3 = new aws.S3();
+    s3.getObject(config['config'], function(err, data){
+        if (err) raiseError(err, err.stack, callback); // an error occurred
+        else {
+            try {
+                var bucket_config = JSON.parse(data.Body.toString('utf-8'))
+            }
+            catch (e) {
+                raiseError("Unable to parse bucket config", e, callback);
+            }
+            processEvent(bucket_config, event, callback);
+        }
+    })
+};
 
