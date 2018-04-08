@@ -1,0 +1,6 @@
+{
+    "config":{
+        "Bucket": "lglambdaconfig",
+        "Key": "ynab_config"
+    }
+}
