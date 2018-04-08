@@ -4,3 +4,4 @@ src/config.json
 tf/.terraform
 ynab_config
 monzo_transaction_created.txt
+*tfstate*
