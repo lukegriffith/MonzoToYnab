@@ -32,7 +32,7 @@ var processEvent = (bucket_config, event, callback) => {
         ]
       }
 
-      console.log(trn);
+      //console.log(trn);
       
       try { 
           ynab.transactions.bulkCreateTransactions(budget_id, trn).catch(e => {
@@ -43,16 +43,23 @@ var processEvent = (bucket_config, event, callback) => {
           raiseError("Parameters for bulkCreateTransaction invalid", e, callback);
       }
 
-      callback();
+      var response = {
+          "statusCode": 200,
+          "headers": {},
+          "body": null,
+          "isBase64Encoded": false
+      }
+
+      callback(null, response);
 }
 
 
 
 exports.handler = (event, context, callback) => {
 
-    console.log("Starting");
+    //console.log("Starting");
 
-    console.log(event);
+    //console.log(event);
 
     var s3 = new aws.S3();
 
