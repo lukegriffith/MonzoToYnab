@@ -1,6 +1,4 @@
-const mod = require('./index.js');
-
-var test_event = {
+{
     "type": "transaction.created",
     "data": {
         "account_id": "acc_00008gju41AHyfLUzBUk8A",
@@ -32,6 +30,3 @@ var test_event = {
         }
     }
 }
-
-
-mod.handler(test_event,'', function(e){})

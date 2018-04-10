@@ -3,17 +3,18 @@ const ynabApi = require('ynab');
 const config = require('./config');
 
 
-function raiseError(error, stack, callback) {
+var  raiseError = (error, stack, callback) => {
     console.log(error);
     console.log(stack);
-
     callback(error);
 };
 
 
 
 
-function processEvent(bucket_config, event, callback){
+var processEvent = (bucket_config, event, callback) => {
+
+    
 
     var ynab = new ynabApi.api(bucket_config['personalAccessToken']);
 
@@ -22,14 +23,16 @@ function processEvent(bucket_config, event, callback){
         transactions: [
             {
                 account_id: bucket_config.accountId,
-                date: ynabApi.utils.getCurrentDateInISOFormat(),
-                amount: -100,
-                memo: 'Created from nodejs app.'
+                date: event.data.created,
+                //date: ynabApi.utils.getCurrentDateInISOFormat(),
+                amount: event.data.amount * 10,
+                memo: event.data.category + " : " + event.data.description,
+                payee_name: event.data.merchant.name,
             }
         ]
       }
 
-      console.log(trn);
+      //console.log(trn);
       
       try { 
           ynab.transactions.bulkCreateTransactions(budget_id, trn).catch(e => {
@@ -40,16 +43,27 @@ function processEvent(bucket_config, event, callback){
           raiseError("Parameters for bulkCreateTransaction invalid", e, callback);
       }
 
-      callback();
+      var response = {
+          "statusCode": 200,
+          "headers": {},
+          "body": null,
+          "isBase64Encoded": false
+      }
+
+      callback(null, response);
 }
 
 
 
 exports.handler = (event, context, callback) => {
 
-    console.log("Starting");
+    //console.log("Starting");
+
+    //console.log(event);
 
     var s3 = new aws.S3();
+
+
     s3.getObject(config['config'], function(err, data){
         if (err) raiseError(err, err.stack, callback); // an error occurred
         else {
@@ -62,5 +76,7 @@ exports.handler = (event, context, callback) => {
             processEvent(bucket_config, event, callback);
         }
     })
+    
+
 };
 
