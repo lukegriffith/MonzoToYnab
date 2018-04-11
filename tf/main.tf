@@ -25,7 +25,6 @@ resource "aws_iam_role" "function_role" {
   assume_role_policy = "${data.aws_iam_policy_document.function_role_policy.json}"
 }
 
-
 resource "aws_s3_bucket" "labmdaFunctionConfig" {
   bucket     = "lglambdaconfig"
   acl        = "private"

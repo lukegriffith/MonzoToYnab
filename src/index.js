@@ -1,6 +1,7 @@
 const aws = require('aws-sdk');
 const ynabApi = require('ynab');
 const config = require('./config');
+const s3 = new aws.S3();
 
 
 var  raiseError = (error, stack, callback) => {
@@ -14,12 +15,9 @@ var  raiseError = (error, stack, callback) => {
 
 var processEvent = (bucket_config, event, callback) => {
 
-    
-
-    var ynab = new ynabApi.api(bucket_config['personalAccessToken']);
-
-      var budget_id = bucket_config.budgetId;
-      var trn = {
+    let ynab = new ynabApi.api(bucket_config['personalAccessToken']);
+    let budget_id = bucket_config.budgetId;
+    let trn = {
         transactions: [
             {
                 account_id: bucket_config.accountId,
@@ -32,8 +30,6 @@ var processEvent = (bucket_config, event, callback) => {
         ]
       }
 
-      //console.log(trn);
-      
       try { 
           ynab.transactions.bulkCreateTransactions(budget_id, trn).catch(e => {
             raiseError("Unable to create transaction", e, callback);
@@ -53,30 +49,43 @@ var processEvent = (bucket_config, event, callback) => {
       callback(null, response);
 }
 
+var putEvent = (bucket_config, event, callback) => {
+
+    let eventDate = new Date(event.data.created);
+    let key = eventDate.getFullYear() + '/' + (eventDate.getMonth() + 1 )  + '/' + eventDate.getDate() + '/' + event.data.id;
+
+    let params = {
+        Body: new Buffer(JSON.stringify(event), 'binary'),
+        Bucket: config.config.Bucket,
+        Key:  key,
+        ACL: "authenticated-read"
+    };
+
+
+    s3.putObject(params, function(err, data) {
+        if (err) console.log(err);
+    })
+
+}
+
 
 
 exports.handler = (event, context, callback) => {
-
-    //console.log("Starting");
-
-    //console.log(event);
-
-    var s3 = new aws.S3();
-
 
     s3.getObject(config['config'], function(err, data){
         if (err) raiseError(err, err.stack, callback); // an error occurred
         else {
             try {
-                var bucket_config = JSON.parse(data.Body.toString('utf-8'))
+                var bucket_config = JSON.parse(data.Body.toString('utf-8'));
             }
             catch (e) {
                 raiseError("Unable to parse bucket config", e, callback);
             }
+
+            putEvent(bucket_config, event, callback);
             processEvent(bucket_config, event, callback);
         }
     })
-    
 
 };
 
