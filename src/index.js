@@ -58,7 +58,7 @@ var putEvent = (bucket_config, event, callback) => {
         Body: new Buffer(JSON.stringify(event), 'binary'),
         Bucket: config.config.Bucket,
         Key:  key,
-        ACL: "authenticated-read"
+        //ACL: "authenticated-read"
     };
 
 
