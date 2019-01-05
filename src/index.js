@@ -13,10 +13,18 @@ var  raiseError = (error, stack, callback) => {
 
 
 
-var processEvent = (bucket_config, event, callback) => {
+var createTransaction = (bucket_config, event, callback) => {
+
+    console.log("createTransaction: Obtaining access token.")
 
     let ynab = new ynabApi.api(bucket_config['personalAccessToken']);
+
+    console.log("createTransaction: Getting budget ID.")
+
     let budget_id = bucket_config.budgetId;
+
+    console.log("createTransaction: Building ynab transaction.")
+
     let trn = {
         transactions: [
             {
@@ -29,39 +37,61 @@ var processEvent = (bucket_config, event, callback) => {
                 payee_name: (event.data.merchant != null ? event.data.merchant.name : null),
             }
         ]
-      }
+    }
 
-      try { 
-          ynab.transactions.bulkCreateTransactions(budget_id, trn).catch(e => {
-            raiseError("Unable to create transaction", e, callback);
-          })
-      }
-      catch (e) {
-          raiseError("Parameters for bulkCreateTransaction invalid", e, callback);
-      }
+    console.log("createTransaction: Creating transaction.")
+    try { 
+        ynab.transactions.bulkCreateTransactions(budget_id, trn).catch(e => {
+          raiseError("createTransaction: Unable to create transaction.", e, callback);
+        })
+    }
+    catch (e) {
+        raiseError("createTransaction: Parameters for bulkCreateTransaction invalid.", e, callback);
+    }
 
-      var response = {
-          "statusCode": 200,
-          "headers": {},
-          "body": null,
-          "isBase64Encoded": false
-      }
+    var response = {
+        "statusCode": 200,
+        "headers": {},
+        "body": null,
+        "isBase64Encoded": false
+    }
 
-      callback(null, response);
+    console.log("createTransaction: Sending callback.")
+
+    callback(null, response);
 }
 
-var putEvent = (bucket_config, event, callback) => {
+var processEvent = (bucket_config, event, callback) => {
+
+    console.log("ProcessEvent: Parsing event.")
 
     let eventDate = new Date(event.data.created);
     let key = eventDate.getFullYear() + '/' + (eventDate.getMonth() + 1 )  + '/' + eventDate.getDate() + '/' + event.data.id;
 
+    console.log("ProcessEvent: Building params.")
+
     let params = {
-        Body: new Buffer(JSON.stringify(event), 'binary'),
+        //Body: new Buffer(JSON.stringify(event), 'binary'),
         Bucket: config.config.Bucket,
         Key:  key,
         //ACL: "authenticated-read"
     };
 
+    console.log("ProcessEvent: Checking S3 object existance.")
+
+    s3.getObject(params, function(err, data){
+        if(err) {
+            console.log("ProcessEvent: " + err)
+            console.log("ProcessEvent: Object does not exist. Creating transaction.")
+            createTransaction(bucket_config, event, callback)
+        }else {
+          console.log("ProcessEvent: Transaction already exists.")
+       }
+    });
+
+    console.log("ProcessEvent: Putting transaction to S3.")
+
+    params['Body'] = new Buffer(JSON.stringify(event), 'binary')
 
     s3.putObject(params, function(err, data) {
         if (err) console.log(err);
@@ -70,12 +100,17 @@ var putEvent = (bucket_config, event, callback) => {
 }
 
 
-
 exports.handler = (event, context, callback) => {
 
+    console.log("Event recieved.")
+
     s3.getObject(config['config'], function(err, data){
+
         if (err) raiseError(err, err.stack, callback); // an error occurred
         else {
+
+            console.log("Obtaining config from bucket.")
+
             try {
                 var bucket_config = JSON.parse(data.Body.toString('utf-8'));
             }
@@ -83,15 +118,8 @@ exports.handler = (event, context, callback) => {
                 raiseError("Unable to parse bucket config", e, callback);
             }
 
-            if (event.data.settled == "") {
-                putEvent(bucket_config, event, callback);
-                processEvent(bucket_config, event, callback);
-            }
-            else {
-                putEvent(bucket_config, event, callback);
-            }
+            processEvent(bucket_config, event, callback)
         }
     })
-
 };
 
