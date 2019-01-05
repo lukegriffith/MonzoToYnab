@@ -25,7 +25,8 @@ var processEvent = (bucket_config, event, callback) => {
                 //date: ynabApi.utils.getCurrentDateInISOFormat(),
                 amount: event.data.amount * 10,
                 memo: event.data.category + " : " + event.data.description,
-                payee_name: event.data.merchant.name,
+                // merchant is null if you pay someone.
+                payee_name: (event.data.merchant != null ? event.data.merchant.name : null),
             }
         ]
       }
