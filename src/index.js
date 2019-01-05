@@ -82,8 +82,13 @@ exports.handler = (event, context, callback) => {
                 raiseError("Unable to parse bucket config", e, callback);
             }
 
-            putEvent(bucket_config, event, callback);
-            processEvent(bucket_config, event, callback);
+            if (event.data.settled == "") {
+                putEvent(bucket_config, event, callback);
+                processEvent(bucket_config, event, callback);
+            }
+            else {
+                putEvent(bucket_config, event, callback);
+            }
         }
     })
 
