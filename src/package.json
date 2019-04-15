@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.222.1",
-    "ynab": "^0.15.0"
+    "ynab": "^0.15.0",
+    "lodash": ">=4.17.11"
   }
 }
